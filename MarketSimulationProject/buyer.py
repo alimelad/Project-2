@@ -1,34 +1,25 @@
 import random
 
-class ReservationValues:
-    def __init__(self, owners_name, reservation_values):
-        self.owners_name = owners_name
+class Buyer:
+    def __init__(self, name, reservation_values, strategy="default"):
+        self.name = name
         self.reservation_values = sorted(reservation_values, reverse=True)
         self.current_unit = 0
-
-    @property
-    def current(self):
-        try:
-            return self.reservation_values[self.current_unit]
-        except IndexError:
-            return None
-
-
-class Buyer:
-    def __init__(self, name, reservation_values):
-        self.name = name
-        self.type = 'B'
-        self.values = ReservationValues(name, reservation_values)
+        self.strategy = strategy
         self.prices = []
         self.contracts = []
 
-    def bid(self, standing_bid):
-        if self.values.current and standing_bid < self.values.current:
-            return self.name, "bid", random.randint(standing_bid, self.values.current)
+    def bid(self):
+        if self.strategy == "adaptive" and self.prices:
+            avg_price = sum(self.prices) / len(self.prices)
+            return max(self.reservation_values[self.current_unit], avg_price)
+        elif self.strategy == "random_choice":
+            return random.randint(10, 200)
+        elif self.current_unit < len(self.reservation_values):
+            return self.reservation_values[self.current_unit]
         return None
 
-    def contract(self, price, your_contract):
-        self.prices.append(price)
-        if your_contract:
-            self.contracts.append(price)
-            self.values.current_unit += 1
+    def contract(self, price, success):
+        if success:
+            self.prices.append(price)
+            self.current_unit += 1
